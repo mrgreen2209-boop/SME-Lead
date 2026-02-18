@@ -9,9 +9,7 @@
       background: #f4f6f8;
       padding: 20px;
     }
-    h2 {
-      margin-top: 30px;
-    }
+    h2 { margin-top: 30px; }
     label {
       font-weight: bold;
       display: block;
@@ -19,7 +17,7 @@
     }
     input, select, button {
       padding: 8px;
-      width: 260px;
+      width: 280px;
       margin-top: 4px;
     }
     button {
@@ -37,18 +35,14 @@
       padding: 6px;
       font-size: 13px;
     }
-    th {
-      background: #eee;
-    }
+    th { background: #eee; }
   </style>
 </head>
 
 <body>
 
 <h2>📋 Lead Entry</h2>
-
 <form id="leadForm"></form>
-
 <button type="button" onclick="saveLead()">💾 Save Lead</button>
 
 <hr>
@@ -72,46 +66,45 @@
 <table id="leadTable"></table>
 
 <script>
-/* ===============================
-   CONFIG
-================================ */
 const API_URL = "https://script.google.com/macros/s/AKfycbywh9bnP9_wfkspulu4udtNBkPO_FMp6CKed6zynHIyMZ2rsqFjg-v2JBUSIg9npDyV/exec";
 
 /* ===============================
-   LOAD HEADERS → BUILD FORM
+   LOAD HEADERS (DUPLICATE SAFE)
 ================================ */
 fetch(API_URL)
-  .then(response => {
-    if (!response.ok) throw new Error("Network error");
-    return response.json();
-  })
+  .then(res => res.json())
   .then(headers => {
     const form = document.getElementById("leadForm");
     form.innerHTML = "";
 
-    headers.forEach(header => {
-      const safeId = header.replace(/[^a-zA-Z0-9]/g, "_");
+    headers.forEach((header, index) => {
+      const safeId = "field_" + index;
 
       form.innerHTML += `
         <label>${header}</label>
-        <input type="text" id="${safeId}" placeholder="${header}">
+        <input 
+          type="text"
+          id="${safeId}"
+          data-header="${header}"
+          placeholder="${header}"
+        >
       `;
     });
   })
   .catch(() => {
-    alert("❌ Headers load nahi hue.\n\n1) Web App redeploy check karo\n2) API_URL sahi hai ya nahi");
+    alert("❌ Headers load nahi hue");
   });
 
 /* ===============================
-   SAVE LEAD
+   SAVE LEAD (EXACT HEADER MATCH)
 ================================ */
 function saveLead() {
   const inputs = document.querySelectorAll("#leadForm input");
   let payload = {};
 
   inputs.forEach(input => {
-    const key = input.previousElementSibling.innerText;
-    payload[key] = input.value;
+    const headerName = input.getAttribute("data-header");
+    payload[headerName] = input.value;
   });
 
   fetch(API_URL, {
@@ -137,8 +130,7 @@ function loadLeads() {
 
   fetch(url)
     .then(res => res.json())
-    .then(showTable)
-    .catch(() => alert("❌ Data load failed"));
+    .then(showTable);
 }
 
 /* ===============================
