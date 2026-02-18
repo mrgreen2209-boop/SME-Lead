@@ -1,122 +1,166 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Lead CRM</title>
   <style>
-    body { font-family: Arial; background:#f4f6f8; padding:20px; }
-    label { font-weight:bold; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+    h2 {
+      margin-top: 30px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
     input, select, button {
-      padding:8px;
-      margin:6px 0;
-      width:260px;
+      padding: 8px;
+      width: 260px;
+      margin-top: 4px;
+    }
+    button {
+      cursor: pointer;
+      margin-top: 15px;
     }
     table {
       border-collapse: collapse;
-      width:100%;
-      margin-top:20px;
-      background:#fff;
+      width: 100%;
+      margin-top: 25px;
+      background: #fff;
     }
     th, td {
-      border:1px solid #ccc;
-      padding:6px;
-      font-size:13px;
+      border: 1px solid #ccc;
+      padding: 6px;
+      font-size: 13px;
     }
-    th { background:#eee; }
+    th {
+      background: #eee;
+    }
   </style>
 </head>
 
 <body>
 
-<h2>📋 Dynamic Lead Entry</h2>
+<h2>📋 Lead Entry</h2>
 
 <form id="leadForm"></form>
 
-<!-- 🔴 IMPORTANT FIX: type="button" -->
-<button type="button" onclick="submitLead()">💾 Save Lead</button>
+<button type="button" onclick="saveLead()">💾 Save Lead</button>
 
 <hr>
 
 <h2>🔍 Filter Leads</h2>
 
+<label>City</label>
 <input id="filterCity" placeholder="City">
+
+<label>Status</label>
 <select id="filterStatus">
-  <option value="">All Status</option>
+  <option value="">All</option>
   <option>New</option>
   <option>In Process</option>
   <option>Lost</option>
 </select>
 
+<br>
 <button type="button" onclick="loadLeads()">Search</button>
 
 <table id="leadTable"></table>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwypdVHM9JjnT96cTamG-t4kZDvqyg-T6GwRqsDUtpZ6c5c3VD-CwHLn9GIn20i2Mv7/exec";
+/* ===============================
+   CONFIG
+================================ */
+const API_URL = "https://script.google.com/macros/s/AKfycbywh9bnP9_wfkspulu4udtNBkPO_FMp6CKed6zynHIyMZ2rsqFjg-v2JBUSIg9npDyV/exec";
 
-/* ---------- LOAD HEADERS ---------- */
-fetch(API_URL + "?action=headers")
-  .then(r => r.json())
+/* ===============================
+   LOAD HEADERS → BUILD FORM
+================================ */
+fetch(API_URL)
+  .then(response => {
+    if (!response.ok) throw new Error("Network error");
+    return response.json();
+  })
   .then(headers => {
     const form = document.getElementById("leadForm");
-    form.innerHTML = ""; // ✅ IMPORTANT
+    form.innerHTML = "";
 
-    headers.forEach(h => {
-      const id = h.replace(/[^a-zA-Z0-9]/g, "_");
+    headers.forEach(header => {
+      const safeId = header.replace(/[^a-zA-Z0-9]/g, "_");
+
       form.innerHTML += `
-        <label>${h}</label><br>
-        <input id="${id}" placeholder="${h}"><br><br>
+        <label>${header}</label>
+        <input type="text" id="${safeId}" placeholder="${header}">
       `;
     });
   })
-  .catch(err => alert("❌ Headers load nahi hue"));
+  .catch(() => {
+    alert("❌ Headers load nahi hue.\n\n1) Web App redeploy check karo\n2) API_URL sahi hai ya nahi");
+  });
 
-/* ---------- SAVE LEAD ---------- */
-function submitLead() {
+/* ===============================
+   SAVE LEAD
+================================ */
+function saveLead() {
   const inputs = document.querySelectorAll("#leadForm input");
-  let data = {};
+  let payload = {};
 
-  inputs.forEach(i => {
-    const key = i.previousElementSibling.innerText;
-    data[key] = i.value;
+  inputs.forEach(input => {
+    const key = input.previousElementSibling.innerText;
+    payload[key] = input.value;
   });
 
   fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    body: JSON.stringify(payload)
   })
-  .then(r => r.json())
+  .then(res => res.json())
   .then(() => {
     alert("✅ Lead Saved Successfully");
     loadLeads();
-  });
+  })
+  .catch(() => alert("❌ Save failed"));
 }
 
-/* ---------- LOAD LEADS ---------- */
+/* ===============================
+   LOAD LEADS
+================================ */
 function loadLeads() {
   let url = API_URL + "?";
-  if (filterCity.value) url += "city=" + filterCity.value + "&";
-  if (filterStatus.value) url += "status=" + filterStatus.value;
+  if (filterCity.value) url += "city=" + encodeURIComponent(filterCity.value) + "&";
+  if (filterStatus.value) url += "status=" + encodeURIComponent(filterStatus.value);
 
   fetch(url)
-    .then(r => r.json())
-    .then(showTable);
+    .then(res => res.json())
+    .then(showTable)
+    .catch(() => alert("❌ Data load failed"));
 }
 
-/* ---------- SHOW TABLE ---------- */
+/* ===============================
+   SHOW TABLE
+================================ */
 function showTable(data) {
-  if (!data.length) {
+  if (!data || !data.length) {
     leadTable.innerHTML = "<tr><td>No Data Found</td></tr>";
     return;
   }
 
   let html = "<tr>";
-  Object.keys(data[0]).forEach(h => html += `<th>${h}</th>`);
+  Object.keys(data[0]).forEach(key => {
+    html += `<th>${key}</th>`;
+  });
   html += "</tr>";
 
   data.forEach(row => {
     html += "<tr>";
-    Object.values(row).forEach(v => html += `<td>${v || ""}</td>`);
+    Object.values(row).forEach(val => {
+      html += `<td>${val || ""}</td>`;
+    });
     html += "</tr>";
   });
 
