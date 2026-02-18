@@ -12,19 +12,19 @@
 
 <body>
 
-<h2>📋 Lead Entry Form</h2>
+<h2>📋 Lead Entry</h2>
 
 <input id="City" placeholder="City">
-<input id="Company Name" placeholder="Company Name">
-<input id="Contact Person" placeholder="Contact Person">
-<input id="Contact No." placeholder="Contact No">
-<select id="SQL Status">
+<input id="Company_Name" placeholder="Company Name">
+<input id="Contact_Person" placeholder="Contact Person">
+<input id="Contact_No" placeholder="Contact No">
+<select id="SQL_Status">
   <option>New</option>
   <option>In Process</option>
   <option>Lost</option>
 </select>
 
-<button onclick="submitLead()">Submit Lead</button>
+<button onclick="submitLead()">Save Lead</button>
 
 <hr>
 
@@ -46,44 +46,47 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwypdVHM9JjnT96cTamG-t4
 
 function submitLead() {
   const data = {
-    "City": document.getElementById("City").value,
-    "Company Name": document.getElementById("Company Name").value,
-    "Contact Person": document.getElementById("Contact Person").value,
-    "Contact No.": document.getElementById("Contact No.").value,
-    "SQL Status": document.getElementById("SQL Status").value
+    "City": City.value,
+    "Company Name": Company_Name.value,
+    "Contact Person": Contact_Person.value,
+    "Contact No.": Contact_No.value,
+    "SQL Status": SQL_Status.value
   };
 
   fetch(API_URL, {
-    method:"POST",
+    method: "POST",
     body: JSON.stringify(data)
   })
-  .then(res=>res.json())
-  .then(()=>alert("Lead Saved ✅"));
+  .then(r => r.json())
+  .then(() => {
+    alert("✅ Lead Saved");
+    loadLeads();
+  });
 }
 
 function loadLeads() {
   let url = API_URL + "?";
-  const city = filterCity.value;
-  const status = filterStatus.value;
-
-  if (city) url += "city="+city+"&";
-  if (status) url += "status="+status;
+  if (filterCity.value) url += "city=" + filterCity.value + "&";
+  if (filterStatus.value) url += "status=" + filterStatus.value;
 
   fetch(url)
-    .then(res=>res.json())
+    .then(r => r.json())
     .then(showTable);
 }
 
 function showTable(data) {
-  let html = "<tr>";
-  if (!data.length) return;
+  if (!data.length) {
+    leadTable.innerHTML = "<tr><td>No data</td></tr>";
+    return;
+  }
 
-  Object.keys(data[0]).forEach(h => html += "<th>"+h+"</th>");
+  let html = "<tr>";
+  Object.keys(data[0]).forEach(h => html += `<th>${h}</th>`);
   html += "</tr>";
 
-  data.forEach(r=>{
+  data.forEach(row => {
     html += "<tr>";
-    Object.values(r).forEach(v => html += "<td>"+v+"</td>");
+    Object.values(row).forEach(v => html += `<td>${v || ""}</td>`);
     html += "</tr>";
   });
 
