@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lead Management</title>
+  <style>
+    body { font-family: Arial; padding:20px; background:#f5f5f5; }
+    input, select, button { margin:5px; padding:8px; }
+    table { border-collapse: collapse; width:100%; margin-top:20px; }
+    th, td { border:1px solid #ccc; padding:6px; }
+  </style>
+</head>
+
+<body>
+
+<h2>📋 Lead Entry Form</h2>
+
+<input id="City" placeholder="City">
+<input id="Company Name" placeholder="Company Name">
+<input id="Contact Person" placeholder="Contact Person">
+<input id="Contact No." placeholder="Contact No">
+<select id="SQL Status">
+  <option>New</option>
+  <option>In Process</option>
+  <option>Lost</option>
+</select>
+
+<button onclick="submitLead()">Submit Lead</button>
+
+<hr>
+
+<h2>🔍 Filter Leads</h2>
+<input id="filterCity" placeholder="City">
+<select id="filterStatus">
+  <option value="">All</option>
+  <option>New</option>
+  <option>In Process</option>
+  <option>Lost</option>
+</select>
+
+<button onclick="loadLeads()">Search</button>
+
+<table id="leadTable"></table>
+
+<script>
+const API_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+
+function submitLead() {
+  const data = {
+    "City": document.getElementById("City").value,
+    "Company Name": document.getElementById("Company Name").value,
+    "Contact Person": document.getElementById("Contact Person").value,
+    "Contact No.": document.getElementById("Contact No.").value,
+    "SQL Status": document.getElementById("SQL Status").value
+  };
+
+  fetch(API_URL, {
+    method:"POST",
+    body: JSON.stringify(data)
+  })
+  .then(res=>res.json())
+  .then(()=>alert("Lead Saved ✅"));
+}
+
+function loadLeads() {
+  let url = API_URL + "?";
+  const city = filterCity.value;
+  const status = filterStatus.value;
+
+  if (city) url += "city="+city+"&";
+  if (status) url += "status="+status;
+
+  fetch(url)
+    .then(res=>res.json())
+    .then(showTable);
+}
+
+function showTable(data) {
+  let html = "<tr>";
+  if (!data.length) return;
+
+  Object.keys(data[0]).forEach(h => html += "<th>"+h+"</th>");
+  html += "</tr>";
+
+  data.forEach(r=>{
+    html += "<tr>";
+    Object.values(r).forEach(v => html += "<td>"+v+"</td>");
+    html += "</tr>";
+  });
+
+  leadTable.innerHTML = html;
+}
+</script>
+
+</body>
+</html>
