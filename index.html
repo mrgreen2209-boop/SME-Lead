@@ -66,6 +66,9 @@
 <table id="leadTable"></table>
 
 <script>
+/* ===============================
+   CONFIG
+================================ */
 const API_URL = "https://script.google.com/macros/s/AKfycbwhE_xg3fCzIa9xB0o1at2YZDS2YY67yudQfhDRfmq_FprRDsZzpqY3yR1pJXTtMCJ9/exec";
 
 /* ===============================
@@ -78,49 +81,37 @@ fetch(API_URL)
     form.innerHTML = "";
 
     headers.forEach((header, index) => {
-      const safeId = "field_" + index;
-
       form.innerHTML += `
         <label>${header}</label>
-        <input 
-          type="text"
-          id="${safeId}"
-          data-header="${header}"
-          placeholder="${header}"
-        >
+        <input type="text"
+               data-header="${header}"
+               placeholder="${header}">
       `;
     });
   })
-  .catch(() => {
-    alert("❌ Headers load nahi hue");
-  });
+  .catch(() => alert("❌ Headers load nahi hue"));
 
 /* ===============================
-   SAVE LEAD (EXACT HEADER MATCH)
+   SAVE LEAD
 ================================ */
-<script>
 function saveLead() {
   const inputs = document.querySelectorAll("#leadForm input");
   let payload = {};
 
   inputs.forEach(input => {
-    const headerName = input.getAttribute("data-header");
-    payload[headerName] = input.value;
+    payload[input.dataset.header] = input.value;
   });
 
   fetch(API_URL, {
     method: "POST",
-    body: JSON.stringify(payload)   // ❌ Content-Type header mat bhejo
+    body: JSON.stringify(payload)
   })
   .then(() => {
     alert("✅ Lead Saved Successfully");
     loadLeads();
   })
-  .catch(() => {
-    alert("❌ Save failed");
-  });
+  .catch(() => alert("❌ Save failed"));
 }
-</script>
 
 /* ===============================
    LOAD LEADS
