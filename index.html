@@ -1,37 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Lead Management</title>
+  <title>Lead CRM</title>
   <style>
-    body { font-family: Arial; padding:20px; background:#f5f5f5; }
-    input, select, button { margin:5px; padding:8px; }
-    table { border-collapse: collapse; width:100%; margin-top:20px; }
-    th, td { border:1px solid #ccc; padding:6px; }
+    body { font-family: Arial; background:#f4f6f8; padding:20px; }
+    h2 { margin-top:30px; }
+    input, select, button {
+      padding:8px;
+      margin:5px;
+      width:250px;
+    }
+    table {
+      border-collapse: collapse;
+      width:100%;
+      margin-top:20px;
+      background:#fff;
+    }
+    th, td {
+      border:1px solid #ccc;
+      padding:6px;
+      font-size:13px;
+    }
+    th { background:#eee; }
   </style>
 </head>
 
 <body>
 
-<h2>📋 Lead Entry</h2>
+<h2>📋 Dynamic Lead Entry</h2>
 
-<input id="City" placeholder="City">
-<input id="Company_Name" placeholder="Company Name">
-<input id="Contact_Person" placeholder="Contact Person">
-<input id="Contact_No" placeholder="Contact No">
-<select id="SQL_Status">
-  <option>New</option>
-  <option>In Process</option>
-  <option>Lost</option>
-</select>
-
-<button onclick="submitLead()">Save Lead</button>
+<form id="leadForm"></form>
+<button onclick="submitLead()">💾 Save Lead</button>
 
 <hr>
 
 <h2>🔍 Filter Leads</h2>
+
 <input id="filterCity" placeholder="City">
 <select id="filterStatus">
-  <option value="">All</option>
+  <option value="">All Status</option>
   <option>New</option>
   <option>In Process</option>
   <option>Lost</option>
@@ -42,16 +49,31 @@
 <table id="leadTable"></table>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwypdVHM9JjnT96cTamG-t4kZDvqyg-T6GwRqsDUtpZ6c5c3VD-CwHLn9GIn20i2Mv7/exec";
+const API_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
 
+/* ---------- LOAD HEADERS & BUILD FORM ---------- */
+fetch(API_URL + "?action=headers")
+  .then(r => r.json())
+  .then(headers => {
+    const form = document.getElementById("leadForm");
+    headers.forEach(h => {
+      const id = h.replace(/ /g, "_");
+      form.innerHTML += `
+        <label>${h}</label><br>
+        <input id="${id}" placeholder="${h}"><br><br>
+      `;
+    });
+  });
+
+/* ---------- SAVE LEAD ---------- */
 function submitLead() {
-  const data = {
-    "City": City.value,
-    "Company Name": Company_Name.value,
-    "Contact Person": Contact_Person.value,
-    "Contact No.": Contact_No.value,
-    "SQL Status": SQL_Status.value
-  };
+  const inputs = document.querySelectorAll("#leadForm input");
+  let data = {};
+
+  inputs.forEach(i => {
+    const key = i.id.replace(/_/g, " ");
+    data[key] = i.value;
+  });
 
   fetch(API_URL, {
     method: "POST",
@@ -59,11 +81,12 @@ function submitLead() {
   })
   .then(r => r.json())
   .then(() => {
-    alert("✅ Lead Saved");
+    alert("✅ Lead Saved Successfully");
     loadLeads();
   });
 }
 
+/* ---------- LOAD LEADS ---------- */
 function loadLeads() {
   let url = API_URL + "?";
   if (filterCity.value) url += "city=" + filterCity.value + "&";
@@ -74,9 +97,10 @@ function loadLeads() {
     .then(showTable);
 }
 
+/* ---------- SHOW TABLE ---------- */
 function showTable(data) {
   if (!data.length) {
-    leadTable.innerHTML = "<tr><td>No data</td></tr>";
+    leadTable.innerHTML = "<tr><td>No Data Found</td></tr>";
     return;
   }
 
