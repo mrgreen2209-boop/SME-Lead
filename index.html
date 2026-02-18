@@ -4,11 +4,11 @@
   <title>Lead CRM</title>
   <style>
     body { font-family: Arial; background:#f4f6f8; padding:20px; }
-    h2 { margin-top:30px; }
+    label { font-weight:bold; }
     input, select, button {
       padding:8px;
-      margin:5px;
-      width:250px;
+      margin:6px 0;
+      width:260px;
     }
     table {
       border-collapse: collapse;
@@ -30,7 +30,9 @@
 <h2>📋 Dynamic Lead Entry</h2>
 
 <form id="leadForm"></form>
-<button onclick="submitLead()">💾 Save Lead</button>
+
+<!-- 🔴 IMPORTANT FIX: type="button" -->
+<button type="button" onclick="submitLead()">💾 Save Lead</button>
 
 <hr>
 
@@ -44,26 +46,29 @@
   <option>Lost</option>
 </select>
 
-<button onclick="loadLeads()">Search</button>
+<button type="button" onclick="loadLeads()">Search</button>
 
 <table id="leadTable"></table>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwypdVHM9JjnT96cTamG-t4kZDvqyg-T6GwRqsDUtpZ6c5c3VD-CwHLn9GIn20i2Mv7/exec";
+const API_URL = "PASTE_NEW_WEB_APP_URL_HERE";
 
-/* ---------- LOAD HEADERS & BUILD FORM ---------- */
+/* ---------- LOAD HEADERS ---------- */
 fetch(API_URL + "?action=headers")
   .then(r => r.json())
   .then(headers => {
     const form = document.getElementById("leadForm");
+    form.innerHTML = ""; // ✅ IMPORTANT
+
     headers.forEach(h => {
-      const id = h.replace(/ /g, "_");
+      const id = h.replace(/[^a-zA-Z0-9]/g, "_");
       form.innerHTML += `
         <label>${h}</label><br>
         <input id="${id}" placeholder="${h}"><br><br>
       `;
     });
-  });
+  })
+  .catch(err => alert("❌ Headers load nahi hue"));
 
 /* ---------- SAVE LEAD ---------- */
 function submitLead() {
@@ -71,12 +76,13 @@ function submitLead() {
   let data = {};
 
   inputs.forEach(i => {
-    const key = i.id.replace(/_/g, " ");
+    const key = i.previousElementSibling.innerText;
     data[key] = i.value;
   });
 
   fetch(API_URL, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   })
   .then(r => r.json())
