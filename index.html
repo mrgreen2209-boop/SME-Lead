@@ -98,6 +98,7 @@ fetch(API_URL)
 /* ===============================
    SAVE LEAD (EXACT HEADER MATCH)
 ================================ */
+<script>
 function saveLead() {
   const inputs = document.querySelectorAll("#leadForm input");
   let payload = {};
@@ -109,16 +110,17 @@ function saveLead() {
 
   fetch(API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload)   // ❌ Content-Type header mat bhejo
   })
-  .then(res => res.json())
   .then(() => {
     alert("✅ Lead Saved Successfully");
     loadLeads();
   })
-  .catch(() => alert("❌ Save failed"));
+  .catch(() => {
+    alert("❌ Save failed");
+  });
 }
+</script>
 
 /* ===============================
    LOAD LEADS
